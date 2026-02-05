@@ -83,11 +83,15 @@ export type Sentiment = "positive" | "neutral" | "negative";
 // ============================================
 
 export interface RetrievalResult {
-  documentId: string;
-  documentName: string;
-  chunkId: string;
-  content: string;
-  score: number;
+  documentId?: string;
+  documentName?: string;
+  chunkId?: string;
+  content?: string;
+  score?: number;
+  // Alternative properties for compatibility
+  id?: string;
+  title?: string;
+  relevance?: number;
 }
 
 // ============================================
@@ -142,14 +146,17 @@ export interface ConversationTurn {
   id: string;
   turnNumber: number;
   speaker: "A" | "B";
-  dialogue: string;
-  actions: string[];              // Non-verbal, screenplay-style
-  traitSignals: TraitSignal[];
-  sentiment: Sentiment;
-  cumulativeTrajectory: OceanProfile;
+  dialogue?: string;
+  message?: string;               // Alternative to dialogue for compatibility
+  actions?: string[];             // Non-verbal, screenplay-style
+  traitSignals?: TraitSignal[];
+  sentiment?: Sentiment;
+  cumulativeTrajectory?: OceanProfile;
+  ocean?: OceanProfile;           // Alternative to cumulativeTrajectory for compatibility
   retrievedDocs?: RetrievalResult[];
+  adaptiveCues?: string[];        // Simplified adaptive cues
   adaptation?: AdaptiveCue;       // V2-ready
-  timestamp: number;
+  timestamp: number | string;
 }
 
 // ============================================
@@ -194,7 +201,7 @@ export interface AnalyzeTurnRequest {
   speaker: "A" | "B";
   participant: Participant;
   conversationContext: string;
-  previousTrajectory: OceanProfile;
+  previousTrajectory?: OceanProfile;
 }
 
 export interface AnalyzeTurnResponse {

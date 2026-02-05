@@ -8,9 +8,12 @@ export function buildAnalysisPrompt(params: {
   actions: string[];
   participant: Participant;
   conversationContext: string;
-  previousTrajectory: OceanProfile;
+  previousTrajectory?: OceanProfile;
 }): string {
   const { dialogue, actions, participant, conversationContext, previousTrajectory } = params;
+
+  // Use previous trajectory if available, otherwise use participant's baseline
+  const trajectory = previousTrajectory || participant.ocean;
 
   const actionsText = actions.length > 0 ? `\nNon-verbal actions: ${actions.join(", ")}` : "";
 
@@ -32,11 +35,11 @@ BASELINE PERSONALITY:
 - Neuroticism: ${participant.ocean.neuroticism}/100
 
 PREVIOUS TRAJECTORY (last turn):
-- Openness: ${previousTrajectory.openness.toFixed(1)}
-- Conscientiousness: ${previousTrajectory.conscientiousness.toFixed(1)}
-- Extraversion: ${previousTrajectory.extraversion.toFixed(1)}
-- Agreeableness: ${previousTrajectory.agreeableness.toFixed(1)}
-- Neuroticism: ${previousTrajectory.neuroticism.toFixed(1)}
+- Openness: ${trajectory.openness.toFixed(1)}
+- Conscientiousness: ${trajectory.conscientiousness.toFixed(1)}
+- Extraversion: ${trajectory.extraversion.toFixed(1)}
+- Agreeableness: ${trajectory.agreeableness.toFixed(1)}
+- Neuroticism: ${trajectory.neuroticism.toFixed(1)}
 
 RECENT CONVERSATION CONTEXT:
 ${conversationContext}

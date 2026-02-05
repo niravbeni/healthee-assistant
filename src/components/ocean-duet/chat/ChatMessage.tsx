@@ -73,18 +73,18 @@ export function ChatMessage({
 
         {/* Dialogue with trait overlay */}
         <div className="text-sm leading-relaxed">
-          {showTraitOverlay && turn.traitSignals.length > 0 ? (
+          {showTraitOverlay && turn.traitSignals && turn.traitSignals.length > 0 ? (
             <TraitHighlightedText
-              text={turn.dialogue}
+              text={turn.dialogue || turn.message || ''}
               signals={turn.traitSignals}
             />
           ) : (
-            turn.dialogue
+            turn.dialogue || turn.message || ''
           )}
         </div>
 
         {/* Non-verbal actions */}
-        {turn.actions.length > 0 && (
+        {turn.actions && turn.actions.length > 0 && (
           <div className="mt-2 space-y-0.5">
             {turn.actions.map((action, index) => (
               <p
@@ -100,44 +100,48 @@ export function ChatMessage({
         {/* Turn indicators */}
         <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/50">
           {/* Sentiment */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: SENTIMENT_COLORS[turn.sentiment] }}
-              />
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">
-              Sentiment: {turn.sentiment}
-            </TooltipContent>
-          </Tooltip>
+          {turn.sentiment && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: SENTIMENT_COLORS[turn.sentiment] }}
+                />
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                Sentiment: {turn.sentiment}
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           {/* Mini OCEAN indicators */}
-          <div className="flex gap-1">
-            {(["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"] as const).map(
-              (trait) => {
-                const signal = turn.traitSignals.find((s) => s.trait === trait);
-                if (!signal) return null;
-                return (
-                  <Tooltip key={trait}>
-                    <TooltipTrigger asChild>
-                      <div
-                        className="w-4 h-1.5 rounded-full opacity-70"
-                        style={{
-                          backgroundColor: OCEAN_COLORS[trait],
-                          opacity: 0.3 + Math.abs(signal.value) * 0.7,
-                        }}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">
-                      {OCEAN_LABELS[trait]}: {signal.value > 0 ? "+" : ""}
-                      {(signal.value * 100).toFixed(0)}%
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              }
-            )}
-          </div>
+          {turn.traitSignals && turn.traitSignals.length > 0 && (
+            <div className="flex gap-1">
+              {(["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"] as const).map(
+                (trait) => {
+                  const signal = turn.traitSignals?.find((s) => s.trait === trait);
+                  if (!signal) return null;
+                  return (
+                    <Tooltip key={trait}>
+                      <TooltipTrigger asChild>
+                        <div
+                          className="w-4 h-1.5 rounded-full opacity-70"
+                          style={{
+                            backgroundColor: OCEAN_COLORS[trait],
+                            opacity: 0.3 + Math.abs(signal.value) * 0.7,
+                          }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs">
+                        {OCEAN_LABELS[trait]}: {signal.value > 0 ? "+" : ""}
+                        {(signal.value * 100).toFixed(0)}%
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                }
+              )}
+            </div>
+          )}
 
           {/* Adaptive cue indicator */}
           {turn.adaptation && (

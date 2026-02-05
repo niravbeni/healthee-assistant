@@ -78,14 +78,16 @@ export function ExportButton() {
       const participant = turn.speaker === "A" ? participantA : participantB;
       lines.push(`### Turn ${turn.turnNumber} - ${participant.name}`);
       lines.push("");
-      lines.push(`> ${turn.dialogue}`);
+      lines.push(`> ${turn.dialogue || turn.message || ''}`);
       lines.push("");
-      if (turn.actions.length > 0) {
+      if (turn.actions && turn.actions.length > 0) {
         lines.push(`*${turn.actions.join("; ")}*`);
         lines.push("");
       }
-      lines.push(`**Sentiment:** ${turn.sentiment}`);
-      lines.push("");
+      if (turn.sentiment) {
+        lines.push(`**Sentiment:** ${turn.sentiment}`);
+        lines.push("");
+      }
     });
 
     downloadFile(

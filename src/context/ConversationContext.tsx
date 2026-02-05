@@ -482,7 +482,7 @@ interface ConversationContextType {
   setAnalyticsTab: (tab: AnalyticsTab) => void;
   toggleTraitOverlay: () => void;
   setGenerating: (isGenerating: boolean) => void;
-  updateTrajectory: (speaker: "A" | "B", trajectory: OceanProfile) => void;
+  updateTrajectory: (speaker: "A" | "B", trajectory?: OceanProfile) => void;
 }
 
 const ConversationContext = createContext<ConversationContextType | undefined>(undefined);
@@ -531,8 +531,11 @@ export function ConversationProvider({ children, assistantType, onboardingAnswer
     setAnalyticsTab: (tab) => dispatch({ type: "SET_ANALYTICS_TAB", payload: tab }),
     toggleTraitOverlay: () => dispatch({ type: "TOGGLE_TRAIT_OVERLAY" }),
     setGenerating: (isGenerating) => dispatch({ type: "SET_GENERATING", payload: isGenerating }),
-    updateTrajectory: (speaker, trajectory) =>
-      dispatch({ type: "UPDATE_TRAJECTORY", payload: { speaker, trajectory } }),
+    updateTrajectory: (speaker, trajectory) => {
+      if (trajectory) {
+        dispatch({ type: "UPDATE_TRAJECTORY", payload: { speaker, trajectory } });
+      }
+    },
   };
 
   return (

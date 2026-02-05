@@ -97,9 +97,14 @@ function detectTraitDeltas(turns: ConversationTurn[]): TraitDelta[] {
   const firstTurn = turns[0];
   const lastTurn = turns[turns.length - 1];
 
+  // Return empty if no trajectory data available
+  if (!firstTurn.cumulativeTrajectory || !lastTurn.cumulativeTrajectory) {
+    return [];
+  }
+
   return traits.map((trait) => {
-    const startValue = firstTurn.cumulativeTrajectory[trait];
-    const endValue = lastTurn.cumulativeTrajectory[trait];
+    const startValue = firstTurn.cumulativeTrajectory![trait];
+    const endValue = lastTurn.cumulativeTrajectory![trait];
     const delta = endValue - startValue;
 
     return {
@@ -186,7 +191,7 @@ function calculateConfidence(
 
   // Check consistency of signals across turns
   const traitSignals = turns.flatMap((t) =>
-    t.traitSignals.filter((s) => s.trait === delta.trait)
+    (t.traitSignals || []).filter((s) => s.trait === delta.trait)
   );
   const avgConfidence =
     traitSignals.length > 0

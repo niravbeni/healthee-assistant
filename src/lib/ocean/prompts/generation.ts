@@ -33,8 +33,8 @@ export function buildGenerationPrompt(params: {
           .slice(-8)
           .map((t) => {
             const name = t.speaker === speaker.id ? speaker.name : otherParticipant.name;
-            const actions = t.actions.length > 0 ? `\n  [${t.actions.join(", ")}]` : "";
-            return `${name}: ${t.dialogue}${actions}`;
+            const actions = t.actions && t.actions.length > 0 ? `\n  [${t.actions.join(", ")}]` : "";
+            return `${name}: ${t.dialogue || t.message || ''}${actions}`;
           })
           .join("\n\n")
       : "This is the start of the conversation.";
