@@ -1,26 +1,164 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-sans: var(--font-inter);
+  
+  /* Krea theme colors */
+  --krea-bg: #E2CAEE;
+  --krea-secondary: #DCC0EB;
+  --krea-accent: #B794C7;
+  
+  /* Bonobo theme colors */
+  --bonobo-bg: #F8F4CF;
+  --bonobo-secondary: #C1BA7B;
+  --bonobo-accent: #A89E5C;
+
+  /* shadcn/ui variables for Ocean Duet */
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
 @theme inline {
+  --font-sans: var(--font-inter);
+  --color-krea-bg: var(--krea-bg);
+  --color-krea-secondary: var(--krea-secondary);
+  --color-krea-accent: var(--krea-accent);
+  --color-bonobo-bg: var(--bonobo-bg);
+  --color-bonobo-secondary: var(--bonobo-secondary);
+  --color-bonobo-accent: var(--bonobo-accent);
+  
+  /* shadcn/ui theme mappings */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}
+
+/* Custom animations for Krea blob */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(147, 51, 234, 0.6);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Gradient background overlay for Krea */
+.gradient-overlay {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    rgba(5, 5, 16, 0.3) 50%,
+    rgba(5, 5, 16, 0.8) 100%
+  );
+}
+
+/* Orange glow behind the blob */
+.orange-glow {
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 140, 50, 0.45) 0%,
+    rgba(255, 120, 40, 0.35) 15%,
+    rgba(255, 100, 30, 0.25) 30%,
+    rgba(200, 80, 20, 0.12) 50%,
+    rgba(150, 60, 10, 0.05) 70%,
+    transparent 85%
+  );
+}
+
+/* Green glow behind Bonobo */
+.green-glow {
+  background: radial-gradient(
+    circle at center,
+    rgba(80, 200, 100, 0.45) 0%,
+    rgba(60, 180, 80, 0.35) 15%,
+    rgba(50, 160, 70, 0.25) 30%,
+    rgba(40, 140, 60, 0.12) 50%,
+    rgba(30, 100, 40, 0.05) 70%,
+    transparent 85%
+  );
 }

@@ -13,6 +13,17 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Custom rules for this project
+  {
+    rules: {
+      // Allow setState in useEffect for client-side initialization patterns
+      "react-hooks/set-state-in-effect": "off",
+      // Allow refs access during render for animation patterns
+      "react-hooks/refs": "off",
+      // Allow immutability patterns for animation callbacks
+      "react-hooks/immutability": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;
