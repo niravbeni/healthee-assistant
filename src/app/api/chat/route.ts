@@ -53,9 +53,6 @@ export async function POST(request: NextRequest) {
       const streamResponse = await openai.chat.completions.create({
         model: MODELS.chat,
         messages,
-        temperature: 0.8,
-        presence_penalty: 0.3,
-        frequency_penalty: 0.3,
         stream: true,
       });
 
@@ -89,9 +86,6 @@ export async function POST(request: NextRequest) {
     const completion = await openai.chat.completions.create({
       model: MODELS.chat,
       messages,
-      temperature: 0.8,
-      presence_penalty: 0.3,
-      frequency_penalty: 0.3,
     });
 
     const responseMessage = completion.choices[0]?.message?.content;
@@ -107,10 +101,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response);
   } catch (error) {
     console.error('Chat error:', error);
+    console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
     
-    // Return a gentle fallback message
+    // Return error details for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({
-      message: "I'm having a moment... give me a second and try again?",
+      message: `I'm having a moment... (${errorMessage})`,
     } as ChatResponse);
   }
 }
