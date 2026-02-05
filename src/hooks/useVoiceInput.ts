@@ -259,8 +259,20 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
       audioContextRef.current = null;
     }
     
-    // Use Web Speech API final transcript (much faster than Whisper!)
-    const text = finalTranscriptRef.current.trim();
+    // Give a tiny moment for any pending speech recognition results
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Use Web Speech API final transcript, or fall back to current live transcript
+    let text = finalTranscriptRef.current.trim();
+    
+    // If no final transcript, use whatever interim transcript we have
+    if (!text) {
+      // Get current live transcript value
+      const currentLive = liveTranscript.trim();
+      if (currentLive) {
+        text = currentLive;
+      }
+    }
     
     // Clear live transcript
     setLiveTranscript('');
@@ -269,11 +281,10 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
       onTranscription?.(text);
       return text;
     } else {
-      // If no transcript from Web Speech API, inform user
-      onError?.('Could not detect speech. Please try again.');
+      // Silently return null - don't show error for short/no speech
       return null;
     }
-  }, [onTranscription, onError]);
+  }, [onTranscription, liveTranscript]);
 
   return {
     isRecording,
