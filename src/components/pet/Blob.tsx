@@ -7,15 +7,17 @@ import { blobVertexShader, blobFragmentShader } from '@/lib/shaders';
 
 interface BlobProps {
   audioIntensity: number;
+  isListening?: boolean;
 }
 
-export function Blob({ audioIntensity }: BlobProps) {
+export function Blob({ audioIntensity, isListening = false }: BlobProps) {
   const meshRef = useRef<THREE.Mesh>(null);
 
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
       uAudioIntensity: { value: 0 },
+      uIsListening: { value: 0 },
     }),
     []
   );
@@ -25,22 +27,30 @@ export function Blob({ audioIntensity }: BlobProps) {
       const material = meshRef.current.material as THREE.ShaderMaterial;
       material.uniforms.uTime.value = state.clock.elapsedTime;
 
-      // Smooth transition for audio intensity
+      // Fast transition for audio intensity - more responsive
       material.uniforms.uAudioIntensity.value = THREE.MathUtils.lerp(
         material.uniforms.uAudioIntensity.value,
         audioIntensity,
-        0.1
+        0.25
       );
 
-      // Subtle rotation
-      meshRef.current.rotation.y += 0.002;
-      meshRef.current.rotation.x += 0.001;
+      // Smooth transition for listening state
+      material.uniforms.uIsListening.value = THREE.MathUtils.lerp(
+        material.uniforms.uIsListening.value,
+        isListening ? 1.0 : 0.0,
+        0.15
+      );
+
+      // Slightly faster rotation when listening
+      const rotationSpeed = isListening ? 0.004 : 0.002;
+      meshRef.current.rotation.y += rotationSpeed;
+      meshRef.current.rotation.x += rotationSpeed * 0.5;
     }
   });
 
   return (
     <mesh ref={meshRef} scale={1.1}>
-      <icosahedronGeometry args={[1, 64]} />
+      <icosahedronGeometry args={[1, 80]} />
       <shaderMaterial
         vertexShader={blobVertexShader}
         fragmentShader={blobFragmentShader}

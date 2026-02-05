@@ -1,6 +1,7 @@
 export const blobVertexShader = `
   uniform float uTime;
   uniform float uAudioIntensity;
+  uniform float uIsListening;
 
   varying vec3 vNormal;
   varying vec3 vPosition;
@@ -78,21 +79,39 @@ export const blobVertexShader = `
     float slowTime = uTime * 0.3;
     float fastTime = uTime * 0.8;
 
-    // Base organic movement
-    float noise1 = snoise(position * 1.5 + slowTime);
-    float noise2 = snoise(position * 3.0 + fastTime * 0.5) * 0.5;
-    float noise3 = snoise(position * 5.0 + slowTime * 2.0) * 0.25;
+    // When listening, slightly speed up the animation
+    float listeningTimeBoost = 1.0 + uIsListening * 0.5;
+    slowTime *= listeningTimeBoost;
+    fastTime *= listeningTimeBoost;
 
+    // Base organic movement - balanced frequencies
+    float noise1 = snoise(position * 1.0 + slowTime) * 0.6;
+    float noise2 = snoise(position * 2.0 + fastTime * 0.4) * 0.3;
+    float noise3 = snoise(position * 3.5 + slowTime * 1.5) * 0.1;
+    
+    // Combine noise layers
     float combinedNoise = noise1 + noise2 + noise3;
 
     // Audio-reactive displacement
     float baseDisplacement = 0.08;
-    float audioDisplacement = uAudioIntensity * 0.4;
+    float audioDisplacement = uAudioIntensity * 0.8;
 
-    float displacement = combinedNoise * (baseDisplacement + audioDisplacement);
+    // Smooth pulsing effect when audio is active (slower, gentler)
+    float audioPulse = sin(uTime * 4.0) * uAudioIntensity * 0.08;
+
+    // Listening "breathing" effect - gentle, smooth pulse
+    float listeningPulse = sin(uTime * 2.0) * uIsListening * 0.04;
+    float listeningWobble = sin(uTime * 2.5 + position.y * 1.5) * uIsListening * 0.025;
+
+    float displacement = combinedNoise * (baseDisplacement + audioDisplacement) + audioPulse + listeningPulse + listeningWobble;
     vDisplacement = displacement;
 
-    vec3 newPosition = position + normal * displacement;
+    // Scale the mesh - slightly bigger when listening
+    float audioScale = 1.0 + uAudioIntensity * 0.12;
+    float listeningScale = 1.0 + uIsListening * 0.03;
+    vec3 scaledPosition = position * audioScale * listeningScale;
+
+    vec3 newPosition = scaledPosition + normal * displacement;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
   }
@@ -101,6 +120,7 @@ export const blobVertexShader = `
 export const blobFragmentShader = `
   uniform float uTime;
   uniform float uAudioIntensity;
+  uniform float uIsListening;
 
   varying vec3 vNormal;
   varying vec3 vPosition;
@@ -111,6 +131,7 @@ export const blobFragmentShader = `
     vec3 color1 = vec3(0.4, 0.2, 0.8); // Purple
     vec3 color2 = vec3(1.0, 0.5, 0.1); // Orange
     vec3 color3 = vec3(0.9, 0.3, 0.5); // Pink accent
+    vec3 listeningColor = vec3(1.0, 0.7, 0.3); // Brighter orange when listening
 
     // Fresnel effect for edge glow
     vec3 viewDirection = normalize(cameraPosition - vPosition);
@@ -120,18 +141,24 @@ export const blobFragmentShader = `
     float mixFactor = (vPosition.y + 1.0) * 0.5;
     mixFactor += sin(uTime * 0.5) * 0.1;
     mixFactor += uAudioIntensity * 0.2;
+    mixFactor += uIsListening * 0.15;
 
     vec3 baseColor = mix(color1, color2, mixFactor);
     baseColor = mix(baseColor, color3, fresnel * 0.5 + uAudioIntensity * 0.3);
+    
+    // Add listening tint - warmer/brighter when actively listening
+    baseColor = mix(baseColor, listeningColor, uIsListening * 0.3);
 
     // Add glow based on displacement and audio
     float glow = (vDisplacement + 0.1) * 2.0;
     glow += uAudioIntensity * 0.5;
+    glow += uIsListening * 0.4; // Extra glow when listening
 
     vec3 finalColor = baseColor + vec3(glow * 0.2);
 
-    // Edge highlight
-    finalColor += fresnel * vec3(0.5, 0.3, 0.2) * (1.0 + uAudioIntensity);
+    // Edge highlight - brighter when listening
+    float edgeIntensity = 1.0 + uAudioIntensity + uIsListening * 0.5;
+    finalColor += fresnel * vec3(0.5, 0.3, 0.2) * edgeIntensity;
 
     gl_FragColor = vec4(finalColor, 1.0);
   }
