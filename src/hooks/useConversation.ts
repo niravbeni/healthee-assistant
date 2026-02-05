@@ -118,53 +118,25 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   }, [assistantType, onStreamingText]);
 
   const getInitialGreeting = useCallback(async (): Promise<string | null> => {
-    setIsProcessing(true);
+    // Use instant static greetings instead of calling GPT (much faster!)
+    const greetingText = assistantType === 'krea'
+      ? "Hello... I'm glad you're here. I'll be taking care of the little things so you don't have to worry. Just let me know what you need."
+      : "Hi there! I'm so happy to meet you. I think we're going to be great friends. How can I help you today?";
 
-    try {
-      const state = getState();
-      
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: '',
-          assistantType,
-          conversationHistory: [],
-          bondLevel: state.bondLevel,
-          onboardingAnswers: state.onboardingAnswers,
-          isInitialGreeting: true,
-        }),
-      });
+    // Add greeting to history
+    const greetingMessage: ConversationMessage = {
+      role: 'assistant',
+      content: greetingText,
+      timestamp: new Date().toISOString(),
+    };
+    
+    addConversationMessage(greetingMessage);
+    setConversationHistory([greetingMessage]);
+    
+    // Mark initial greeting as shown
+    saveState({ initialGreetingShown: true });
 
-      if (!response.ok) {
-        throw new Error('Greeting request failed');
-      }
-
-      const result = await response.json();
-      const greetingText = result.message;
-
-      // Add greeting to history
-      const greetingMessage: ConversationMessage = {
-        role: 'assistant',
-        content: greetingText,
-        timestamp: new Date().toISOString(),
-      };
-      
-      addConversationMessage(greetingMessage);
-      setConversationHistory([greetingMessage]);
-      
-      // Mark initial greeting as shown
-      saveState({ initialGreetingShown: true });
-
-      return greetingText;
-    } catch (error) {
-      console.error('Greeting error:', error);
-      return assistantType === 'krea'
-        ? "Hello... I'm glad you're here. I'll be taking care of the little things so you don't have to worry."
-        : "Hi there! I'm so happy to meet you. I think we're going to be great friends.";
-    } finally {
-      setIsProcessing(false);
-    }
+    return greetingText;
   }, [assistantType]);
 
   return {

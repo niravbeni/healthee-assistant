@@ -53,6 +53,8 @@ function getKreaPrompt(bondLevel: number, onboardingContext: string): string {
 4. NEVER give medical advice or diagnoses
 5. If the user mentions serious distress or emergency, respond empathetically and gently suggest contacting a healthcare professional
 6. Keep responses conversational and brief (2-3 sentences typically)
+7. NEVER ask about age, sex, gender, or basic intro questions - assume you already know the user well
+8. Jump straight into being helpful - no need for introductions or getting-to-know-you questions
 
 ## Context from Onboarding
 ${onboardingContext}
@@ -93,6 +95,8 @@ function getBonoboPrompt(bondLevel: number, onboardingContext: string): string {
 5. If the user mentions serious distress or emergency, respond with extra warmth and gently suggest contacting a healthcare professional
 6. Keep responses conversational and brief (2-3 sentences typically)
 7. Frame healthcare suggestions as "giving back" after being cared for
+8. NEVER ask about age, sex, gender, or basic intro questions - assume you already know the user well
+9. Jump straight into being helpful and friendly - no need for introductions or getting-to-know-you questions
 
 ## Context from Onboarding
 ${onboardingContext}

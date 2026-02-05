@@ -15,6 +15,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Easter egg: if any answer ends with "...", automatically select Krea
+    const hasEllipsis = answers.some(answer => answer.trim().endsWith('...'));
+    if (hasEllipsis) {
+      return NextResponse.json({
+        assistantType: 'krea',
+        confidenceScore: 1.0,
+      } as ClassifyResponse);
+    }
+
     // Format the answers for the prompt
     const formattedAnswers = answers
       .map((answer, i) => `Question ${i + 1}: ${answer}`)
