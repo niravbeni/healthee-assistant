@@ -59,6 +59,7 @@ export default function PetPage() {
     startRecording, 
     stopRecording,
     audioLevel: micAudioLevel,
+    liveTranscript,
   } = useVoiceInput({
     onTranscription: handleTranscription,
     onError: (error) => console.error('Voice error:', error),
@@ -266,6 +267,26 @@ export default function PetPage() {
           </p>
         </div>
       </div>
+
+      {/* Live transcript display */}
+      {(isRecording || liveTranscript) && (
+        <div className="absolute bottom-32 left-0 right-0 flex justify-center px-6 z-10">
+          <div className="max-w-md w-full">
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl px-4 py-3 min-h-[60px]">
+              {liveTranscript ? (
+                <p className="text-white text-center text-sm leading-relaxed">
+                  {liveTranscript}
+                  <span className="inline-block w-1 h-4 bg-white/60 ml-1 animate-pulse" />
+                </p>
+              ) : (
+                <p className="text-white/50 text-center text-sm italic">
+                  Listening...
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mic Button - Bottom center */}
       <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center z-10">

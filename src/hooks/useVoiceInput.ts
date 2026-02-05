@@ -2,6 +2,49 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 
+// Web Speech API types
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
+
 interface UseVoiceInputOptions {
   onTranscription?: (text: string) => void;
   onError?: (error: string) => void;
@@ -15,6 +58,7 @@ interface UseVoiceInputReturn {
   audioLevel: number;
   hasPermission: boolean | null;
   requestPermission: () => Promise<boolean>;
+  liveTranscript: string;
 }
 
 export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInputReturn {
@@ -24,6 +68,7 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
   const [isProcessing, setIsProcessing] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [liveTranscript, setLiveTranscript] = useState('');
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -31,6 +76,8 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const animationFrameRef = useRef<number>(0);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const finalTranscriptRef = useRef<string>('');
 
   // Cleanup on unmount
   useEffect(() => {
@@ -43,6 +90,9 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
       }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
       }
     };
   }, []);
@@ -92,6 +142,8 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
   const startRecording = useCallback(async () => {
     try {
       chunksRef.current = [];
+      finalTranscriptRef.current = '';
+      setLiveTranscript('');
       
       // Get audio stream
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -126,6 +178,45 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
       mediaRecorderRef.current = mediaRecorder;
       mediaRecorder.start(100); // Collect data every 100ms
       
+      // Set up Web Speech API for live transcription
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
+          let interimTranscript = '';
+          let finalTranscript = finalTranscriptRef.current;
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i];
+            if (result.isFinal) {
+              finalTranscript += result[0].transcript + ' ';
+              finalTranscriptRef.current = finalTranscript;
+            } else {
+              interimTranscript += result[0].transcript;
+            }
+          }
+          
+          setLiveTranscript(finalTranscript + interimTranscript);
+        };
+        
+        recognition.onerror = (event) => {
+          console.log('Speech recognition error:', event);
+          // Don't report error - Web Speech API is optional enhancement
+        };
+        
+        recognition.onend = () => {
+          // Recognition ended, could restart if still recording
+          // but we'll let it end naturally
+        };
+        
+        recognitionRef.current = recognition;
+        recognition.start();
+      }
+      
       setIsRecording(true);
       
       // Start audio level monitoring
@@ -151,6 +242,12 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      
+      // Stop Web Speech API recognition
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
 
       mediaRecorderRef.current.onstop = async () => {
         // Stop all tracks
@@ -170,11 +267,12 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
         });
         
         if (audioBlob.size === 0) {
+          setLiveTranscript('');
           resolve(null);
           return;
         }
 
-        // Send to transcription API
+        // Send to transcription API (Whisper for accuracy)
         setIsProcessing(true);
         
         try {
@@ -193,6 +291,9 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
           const result = await response.json();
           const text = result.text?.trim();
           
+          // Clear live transcript after processing
+          setLiveTranscript('');
+          
           if (text) {
             onTranscription?.(text);
             resolve(text);
@@ -202,6 +303,7 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
         } catch (error) {
           console.error('Transcription error:', error);
           onError?.('Failed to transcribe audio. Please try again.');
+          setLiveTranscript('');
           resolve(null);
         } finally {
           setIsProcessing(false);
@@ -220,5 +322,6 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
     audioLevel,
     hasPermission,
     requestPermission,
+    liveTranscript,
   };
 }
