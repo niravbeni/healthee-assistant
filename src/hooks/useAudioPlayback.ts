@@ -140,10 +140,23 @@ export function useAudioPlayback(options: UseAudioPlaybackOptions = {}): UseAudi
         URL.revokeObjectURL(audioUrl);
       };
 
-      // Play the audio
-      await audio.play();
+      // Play the audio - catch AbortError when playback is interrupted
+      try {
+        await audio.play();
+      } catch (playError) {
+        // Ignore AbortError - this happens when audio is paused before it starts
+        if (playError instanceof Error && playError.name === 'AbortError') {
+          // Silently ignore - this is expected when user interrupts playback
+          return;
+        }
+        throw playError;
+      }
 
     } catch (error) {
+      // Ignore AbortError at top level too
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
       console.error('Audio playback error:', error);
       setIsPlaying(false);
       setAudioLevel(0);
