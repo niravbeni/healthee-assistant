@@ -5,14 +5,15 @@ import { ChatRequest, ChatResponse } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
-    const body: ChatRequest = await request.json();
+    const body: ChatRequest & { stream?: boolean } = await request.json();
     const { 
       message, 
       assistantType, 
       conversationHistory, 
       bondLevel, 
       onboardingAnswers,
-      isInitialGreeting 
+      isInitialGreeting,
+      stream = false,
     } = body;
 
     if (!assistantType) {
@@ -47,6 +48,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Streaming response
+    if (stream) {
+      const streamResponse = await openai.chat.completions.create({
+        model: MODELS.chat,
+        messages,
+        temperature: 0.8,
+        presence_penalty: 0.3,
+        frequency_penalty: 0.3,
+        stream: true,
+      });
+
+      // Create a readable stream
+      const encoder = new TextEncoder();
+      const readableStream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of streamResponse) {
+              const content = chunk.choices[0]?.delta?.content || '';
+              if (content) {
+                controller.enqueue(encoder.encode(content));
+              }
+            }
+            controller.close();
+          } catch (error) {
+            controller.error(error);
+          }
+        },
+      });
+
+      return new Response(readableStream, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Transfer-Encoding': 'chunked',
+        },
+      });
+    }
+
+    // Non-streaming response (default)
     const completion = await openai.chat.completions.create({
       model: MODELS.chat,
       messages,

@@ -230,88 +230,49 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
   }, [onError, updateAudioLevel]);
 
   const stopRecording = useCallback(async (): Promise<string | null> => {
-    return new Promise((resolve) => {
-      if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') {
-        resolve(null);
-        return;
-      }
-
-      setIsRecording(false);
-      setAudioLevel(0);
-      
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      
-      // Stop Web Speech API recognition
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-        recognitionRef.current = null;
-      }
-
-      mediaRecorderRef.current.onstop = async () => {
-        // Stop all tracks
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-        }
-        
-        // Close audio context
-        if (audioContextRef.current) {
-          await audioContextRef.current.close();
-          audioContextRef.current = null;
-        }
-
-        // Create blob from chunks
-        const audioBlob = new Blob(chunksRef.current, { 
-          type: mediaRecorderRef.current?.mimeType || 'audio/webm'
-        });
-        
-        if (audioBlob.size === 0) {
-          setLiveTranscript('');
-          resolve(null);
-          return;
-        }
-
-        // Send to transcription API (Whisper for accuracy)
-        setIsProcessing(true);
-        
-        try {
-          const formData = new FormData();
-          formData.append('audio', audioBlob, 'recording.webm');
-
-          const response = await fetch('/api/transcribe', {
-            method: 'POST',
-            body: formData,
-          });
-
-          if (!response.ok) {
-            throw new Error('Transcription failed');
-          }
-
-          const result = await response.json();
-          const text = result.text?.trim();
-          
-          // Clear live transcript after processing
-          setLiveTranscript('');
-          
-          if (text) {
-            onTranscription?.(text);
-            resolve(text);
-          } else {
-            resolve(null);
-          }
-        } catch (error) {
-          console.error('Transcription error:', error);
-          onError?.('Failed to transcribe audio. Please try again.');
-          setLiveTranscript('');
-          resolve(null);
-        } finally {
-          setIsProcessing(false);
-        }
-      };
-
+    setIsRecording(false);
+    setAudioLevel(0);
+    
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    
+    // Stop Web Speech API recognition
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    
+    // Stop media recorder
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
-    });
+    }
+    
+    // Stop all tracks
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    
+    // Close audio context
+    if (audioContextRef.current) {
+      await audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    
+    // Use Web Speech API final transcript (much faster than Whisper!)
+    const text = finalTranscriptRef.current.trim();
+    
+    // Clear live transcript
+    setLiveTranscript('');
+    
+    if (text) {
+      onTranscription?.(text);
+      return text;
+    } else {
+      // If no transcript from Web Speech API, inform user
+      onError?.('Could not detect speech. Please try again.');
+      return null;
+    }
   }, [onTranscription, onError]);
 
   return {

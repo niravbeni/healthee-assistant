@@ -31,7 +31,7 @@ export default function PetPage() {
   // Initialize hooks after we have assistant type
   const { speak, stop: stopSpeaking, isPlaying, audioLevel: speakerAudioLevel } = useAudioPlayback({});
 
-  const { sendMessage, getInitialGreeting, isProcessing: isChatProcessing, conversationHistory } = useConversation({
+  const { sendMessage, getInitialGreeting, isProcessing: isChatProcessing, conversationHistory, streamingText } = useConversation({
     assistantType: assistantType || 'bonobo',
   });
 
@@ -268,15 +268,22 @@ export default function PetPage() {
         </div>
       </div>
 
-      {/* Live transcript display */}
-      {(isRecording || liveTranscript) && (
+      {/* Live transcript / streaming response display */}
+      {(isRecording || liveTranscript || streamingText) && (
         <div className="absolute bottom-32 left-0 right-0 flex justify-center px-6 z-10">
           <div className="max-w-md w-full">
             <div className="bg-white/10 backdrop-blur-md rounded-2xl px-4 py-3 min-h-[60px]">
-              {liveTranscript ? (
+              {streamingText ? (
+                // Pet's streaming response
                 <p className="text-white text-center text-sm leading-relaxed">
-                  {liveTranscript}
+                  {streamingText}
                   <span className="inline-block w-1 h-4 bg-white/60 ml-1 animate-pulse" />
+                </p>
+              ) : liveTranscript ? (
+                // User's live transcript
+                <p className="text-white/80 text-center text-sm leading-relaxed italic">
+                  &ldquo;{liveTranscript}&rdquo;
+                  <span className="inline-block w-1 h-4 bg-white/40 ml-1 animate-pulse" />
                 </p>
               ) : (
                 <p className="text-white/50 text-center text-sm italic">

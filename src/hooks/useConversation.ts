@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { AssistantType, ConversationMessage } from '@/types';
 import { addConversationMessage, getState, saveState } from '@/lib/storage';
 
 interface UseConversationOptions {
   assistantType: AssistantType;
+  onStreamingText?: (text: string) => void;
 }
 
 interface UseConversationReturn {
@@ -13,22 +14,26 @@ interface UseConversationReturn {
   getInitialGreeting: () => Promise<string | null>;
   isProcessing: boolean;
   conversationHistory: ConversationMessage[];
+  streamingText: string;
 }
 
 export function useConversation(options: UseConversationOptions): UseConversationReturn {
-  const { assistantType } = options;
+  const { assistantType, onStreamingText } = options;
   const [isProcessing, setIsProcessing] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
   const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>(() => {
     if (typeof window !== 'undefined') {
       return getState().conversationHistory;
     }
     return [];
   });
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const sendMessage = useCallback(async (text: string): Promise<string | null> => {
     if (!text.trim()) return null;
 
     setIsProcessing(true);
+    setStreamingText('');
 
     // Add user message to history
     const userMessage: ConversationMessage = {
@@ -43,6 +48,12 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     try {
       const state = getState();
       
+      // Cancel any previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      abortControllerRef.current = new AbortController();
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -52,34 +63,59 @@ export function useConversation(options: UseConversationOptions): UseConversatio
           conversationHistory: state.conversationHistory,
           bondLevel: state.bondLevel,
           onboardingAnswers: state.onboardingAnswers,
+          stream: true,
         }),
+        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {
         throw new Error('Chat request failed');
       }
 
-      const result = await response.json();
-      const responseText = result.message;
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      const decoder = new TextDecoder();
+      let fullText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        fullText += chunk;
+        setStreamingText(fullText);
+        onStreamingText?.(fullText);
+      }
+
+      // Clear streaming text after complete
+      setStreamingText('');
 
       // Add assistant message to history
       const assistantMessage: ConversationMessage = {
         role: 'assistant',
-        content: responseText,
+        content: fullText,
         timestamp: new Date().toISOString(),
       };
       
       addConversationMessage(assistantMessage);
       setConversationHistory(prev => [...prev, assistantMessage]);
 
-      return responseText;
+      return fullText;
     } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        return null;
+      }
       console.error('Conversation error:', error);
       return "I'm having a moment... could you try again?";
     } finally {
       setIsProcessing(false);
+      setStreamingText('');
     }
-  }, [assistantType]);
+  }, [assistantType, onStreamingText]);
 
   const getInitialGreeting = useCallback(async (): Promise<string | null> => {
     setIsProcessing(true);
@@ -136,5 +172,6 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     getInitialGreeting,
     isProcessing,
     conversationHistory,
+    streamingText,
   };
 }
