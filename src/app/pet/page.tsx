@@ -254,15 +254,15 @@ export default function PetPage() {
 
       {/* Intro text - shows on first visit */}
       <div 
-        className={`absolute top-20 left-0 right-0 z-20 flex justify-center px-6 transition-all duration-1000 ${
-          showIntro ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
+        className={`absolute inset-x-0 top-1/4 z-20 flex justify-center items-center px-8 transition-all duration-1000 ${
+          showIntro ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
         }`}
       >
-        <div className="max-w-md text-center">
-          <h1 className="text-2xl font-light text-white mb-3">
+        <div className="max-w-lg text-center">
+          <h1 className="text-4xl md:text-5xl font-light text-white mb-4">
             Hi, I&apos;m {petIntros[assistantType].name}!
           </h1>
-          <p className="text-white/80 text-sm leading-relaxed">
+          <p className="text-white/80 text-lg md:text-xl leading-relaxed">
             {petIntros[assistantType].description}
           </p>
         </div>
