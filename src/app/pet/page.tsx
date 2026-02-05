@@ -22,6 +22,7 @@ export default function PetPage() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [showOceanDuet, setShowOceanDuet] = useState(false);
   const [onboardingAnswers, setOnboardingAnswers] = useState<string[]>([]);
+  const [showIntro, setShowIntro] = useState(false);
   
   const hasGreetedRef = useRef(false);
   const isProcessingRef = useRef(false);
@@ -99,7 +100,7 @@ export default function PetPage() {
     setIsInitialized(true);
   }, [router]);
 
-  // Initial greeting
+  // Initial greeting and intro text
   useEffect(() => {
     if (!isInitialized || !assistantType || hasGreetedRef.current) return;
     
@@ -111,15 +112,26 @@ export default function PetPage() {
 
     hasGreetedRef.current = true;
     
+    // Show intro text
+    setShowIntro(true);
+    
+    // Fade out intro after 6 seconds
+    const introTimer = setTimeout(() => {
+      setShowIntro(false);
+    }, 6000);
+    
     // Delay greeting slightly for better UX
-    const timer = setTimeout(async () => {
+    const greetingTimer = setTimeout(async () => {
       const greeting = await getInitialGreeting();
       if (greeting) {
         await speak(greeting, assistantType);
       }
     }, 1000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(introTimer);
+      clearTimeout(greetingTimer);
+    };
   }, [isInitialized, assistantType, getInitialGreeting, speak]);
 
   // Spacebar support for push-to-talk
@@ -213,6 +225,18 @@ export default function PetPage() {
     );
   }
 
+  // Pet intro descriptions
+  const petIntros = {
+    krea: {
+      name: 'Krea',
+      description: "I'm here to help you stay on top of your health. I'll handle the mental load of scheduling, reminders, and keeping track of everything so you don't have to worry.",
+    },
+    bonobo: {
+      name: 'Bonobo', 
+      description: "I'm here to be your companion on your health journey. When you take care of me, I take care of you. Let's support each other!",
+    },
+  };
+
   return (
     <main className="relative w-full h-screen h-dvh overflow-hidden">
       {/* Pet Canvas - Full screen */}
@@ -225,6 +249,22 @@ export default function PetPage() {
           onClick={handlePetClick}
           onPet={handlePet}
         />
+      </div>
+
+      {/* Intro text - shows on first visit */}
+      <div 
+        className={`absolute top-20 left-0 right-0 z-20 flex justify-center px-6 transition-all duration-1000 ${
+          showIntro ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
+        }`}
+      >
+        <div className="max-w-md text-center">
+          <h1 className="text-2xl font-light text-white mb-3">
+            Hi, I&apos;m {petIntros[assistantType].name}!
+          </h1>
+          <p className="text-white/80 text-sm leading-relaxed">
+            {petIntros[assistantType].description}
+          </p>
+        </div>
       </div>
 
       {/* Mic Button - Bottom center */}
