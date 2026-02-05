@@ -5,6 +5,7 @@
 
 :root {
   --font-sans: var(--font-inter);
+  --font-newsreader: var(--font-newsreader);
   
   /* Krea theme colors */
   --krea-bg: #E2CAEE;

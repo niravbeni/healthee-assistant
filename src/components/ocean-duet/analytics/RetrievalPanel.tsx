@@ -64,17 +64,17 @@ export function RetrievalPanel() {
       {/* Snippets */}
       <ScrollArea className="flex-1">
         <div className="space-y-3">
-          {retrievedDocs.map((doc) => (
-            <Card key={doc.chunkId} className="p-3">
+          {retrievedDocs.map((doc, index) => (
+            <Card key={doc.chunkId || doc.id || index} className="p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-muted-foreground">
-                  {doc.documentName}
+                  {doc.documentName || doc.title || 'Document'}
                 </span>
                 <Badge variant="secondary" className="text-[10px]">
-                  Score: {(doc.score * 100).toFixed(0)}%
+                  Score: {((doc.score || doc.relevance || 0) * 100).toFixed(0)}%
                 </Badge>
               </div>
-              <p className="text-sm leading-relaxed">{doc.content}</p>
+              <p className="text-sm leading-relaxed">{doc.content || 'Retrieved context'}</p>
             </Card>
           ))}
         </div>

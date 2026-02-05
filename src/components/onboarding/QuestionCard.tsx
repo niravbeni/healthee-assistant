@@ -53,26 +53,11 @@ export default function QuestionCard({
           ? 'opacity-100 translate-y-0'
           : 'opacity-0 translate-y-8 pointer-events-none'
       }`}
+      style={{ fontFamily: 'var(--font-newsreader), Georgia, serif' }}
     >
-      <div className="w-full max-w-lg">
-        {/* Progress indicator */}
-        <div className="mb-8 flex justify-center gap-2">
-          {Array.from({ length: totalQuestions }).map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${
-                i < questionNumber
-                  ? 'bg-[#9496B8]'
-                  : i === questionNumber
-                  ? 'bg-[#B5B6CE]'
-                  : 'bg-white/50'
-              }`}
-            />
-          ))}
-        </div>
-
+      <div className="w-full max-w-md">
         {/* Question */}
-        <h2 className="text-2xl md:text-3xl font-light text-gray-800 text-center mb-8 leading-relaxed">
+        <h2 className="text-2xl md:text-3xl text-gray-800 text-center mb-12 leading-relaxed font-normal">
           {question.question}
         </h2>
 
@@ -89,17 +74,19 @@ export default function QuestionCard({
                      text-gray-700 placeholder-gray-400 resize-none
                      focus:outline-none focus:ring-2 focus:ring-[#9496B8]/50 focus:border-transparent
                      transition-all duration-200"
+            style={{ fontFamily: 'var(--font-newsreader), Georgia, serif' }}
           />
 
           <div className="flex justify-center">
             <button
               type="submit"
               disabled={!answer.trim()}
-              className={`px-8 py-3 rounded-full font-medium transition-all duration-200 ${
+              className={`px-8 py-3 rounded-full transition-all duration-200 ${
                 answer.trim()
                   ? 'bg-[#9496B8] text-white hover:bg-[#7D7FA3] shadow-lg shadow-[#D2D3E8] cursor-pointer'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
+              style={{ fontFamily: 'var(--font-newsreader), Georgia, serif' }}
             >
               {questionNumber < totalQuestions - 1 ? 'Continue' : 'Meet your companion'}
             </button>
@@ -107,7 +94,7 @@ export default function QuestionCard({
         </form>
 
         {/* Skip option */}
-        <p className="text-center mt-6 text-sm text-gray-500">
+        <p className="text-center mt-6 text-sm text-gray-400">
           Press Enter to continue
         </p>
       </div>

@@ -33,8 +33,18 @@ export function TrajectoryChart() {
 
   // Build chart data from turns
   const chartData = turns.map((turn) => {
-    const trajectory = turn.cumulativeTrajectory;
+    // Use cumulativeTrajectory if available, fall back to ocean
+    const trajectory = turn.cumulativeTrajectory || turn.ocean;
     const prefix = turn.speaker === "A" ? "a" : "b";
+
+    // Handle case where trajectory might still be undefined
+    if (!trajectory) {
+      return {
+        turn: turn.turnNumber,
+        turnId: turn.id,
+        speaker: turn.speaker,
+      };
+    }
 
     return {
       turn: turn.turnNumber,

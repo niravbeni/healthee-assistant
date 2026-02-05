@@ -39,7 +39,19 @@ export function RadarChart() {
   }
 
   const participant = turn.speaker === "A" ? participantA : participantB;
-  const trajectory = turn.cumulativeTrajectory;
+  // Use cumulativeTrajectory if available, fall back to ocean
+  const trajectory = turn.cumulativeTrajectory || turn.ocean;
+
+  // Handle case where trajectory might still be undefined
+  if (!trajectory) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">
+          No personality data for this turn
+        </p>
+      </div>
+    );
+  }
 
   // Build radar data
   const radarData = OCEAN_TRAITS.map((trait) => ({

@@ -9,6 +9,7 @@ import DisclaimerModal from '@/components/ui/DisclaimerModal';
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const [showIntro, setShowIntro] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [isClassifying, setIsClassifying] = useState(false);
@@ -85,7 +86,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="min-h-screen min-h-dvh bg-gradient-to-br from-[#D4D5E9] via-[#D2D3E8] to-white relative overflow-hidden">
+    <main className="min-h-screen min-h-dvh bg-gradient-to-br from-[#D4D5E9] via-[#D2D3E8] to-white relative overflow-hidden" style={{ fontFamily: 'var(--font-newsreader), Georgia, serif' }}>
       {/* Disclaimer modal */}
       <DisclaimerModal isOpen={showDisclaimer} onAccept={handleDisclaimerAccept} />
 
@@ -95,23 +96,47 @@ export default function OnboardingPage() {
         <div className="absolute -bottom-1/4 -left-1/4 w-1/2 h-1/2 bg-white/50 rounded-full blur-3xl" />
       </div>
 
-      {/* Welcome message (shown before first question starts being answered) */}
-      {currentQuestion === 0 && answers.length === 0 && (
-        <div className="absolute top-8 left-0 right-0 text-center">
-          <h1 className="text-lg text-gray-500 font-light">
-            Let&apos;s get to know each other
-          </h1>
+      {/* Healthee logo at top */}
+      <div className="absolute top-12 left-0 right-0 text-center z-10">
+        <h1 className="text-3xl md:text-4xl text-gray-800 font-bold italic" style={{ fontFamily: 'var(--font-newsreader), Georgia, serif' }}>
+          Healthee
+        </h1>
+      </div>
+
+      {/* Intro screen */}
+      {showIntro && !showDisclaimer && (
+        <div 
+          className="absolute inset-0 flex flex-col items-center justify-center px-8 z-20"
+          style={{ fontFamily: 'var(--font-newsreader), Georgia, serif' }}
+        >
+          <div className="max-w-sm text-center">
+            <h2 className="text-3xl md:text-4xl text-gray-800 mb-16">
+              Hi there 👋
+            </h2>
+            
+            <p className="text-xl md:text-2xl text-gray-700 leading-relaxed mb-16">
+              Let&apos;s start by getting to know you. You can answer as much or as little as you like...
+            </p>
+            
+            <button
+              onClick={() => setShowIntro(false)}
+              className="px-8 py-3 rounded-full bg-[#9496B8] text-white hover:bg-[#7D7FA3] shadow-lg shadow-[#D2D3E8] cursor-pointer transition-all duration-200"
+              style={{ fontFamily: 'var(--font-newsreader), Georgia, serif' }}
+            >
+              Get started
+            </button>
+          </div>
         </div>
       )}
 
       {/* Questions */}
-      <div className="relative w-full h-screen h-dvh">
+      <div className={`relative w-full h-screen h-dvh transition-opacity duration-500 ${showIntro ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         {ONBOARDING_QUESTIONS.map((question, index) => (
           <QuestionCard
             key={question.id}
             question={question}
             onAnswer={handleAnswer}
-            isActive={currentQuestion === index && !isClassifying}
+            isActive={currentQuestion === index && !isClassifying && !showIntro}
             questionNumber={index}
             totalQuestions={ONBOARDING_QUESTIONS.length}
           />
@@ -119,12 +144,14 @@ export default function OnboardingPage() {
 
         {/* Loading state */}
         {isClassifying && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="relative">
-              <div className="w-16 h-16 rounded-full bg-[#D2D3E8]/50 animate-ping absolute inset-0" />
-              <div className="w-16 h-16 rounded-full bg-[#9496B8] animate-pulse" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ fontFamily: 'var(--font-newsreader), Georgia, serif' }}>
+            {/* Pulsing dots */}
+            <div className="flex items-center gap-2 mb-8">
+              <div className="w-3 h-3 rounded-full bg-[#9496B8] animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="w-3 h-3 rounded-full bg-[#9496B8] animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="w-3 h-3 rounded-full bg-[#9496B8] animate-bounce" style={{ animationDelay: '300ms' }} />
             </div>
-            <p className="mt-8 text-gray-600 font-light animate-pulse">
+            <p className="text-gray-600">
               Finding your perfect companion...
             </p>
           </div>

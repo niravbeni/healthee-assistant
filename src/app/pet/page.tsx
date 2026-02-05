@@ -229,6 +229,7 @@ export default function PetPage() {
           onClose={() => setShowOceanDuet(false)} 
           assistantType={assistantType} 
           onboardingAnswers={onboardingAnswers}
+          conversationHistory={conversationHistory}
         />
       </Suspense>
     );
@@ -276,22 +277,19 @@ export default function PetPage() {
         </div>
       </div>
 
-      {/* Live transcript display - only shows user's voice input */}
+      {/* Live transcript display - centered over the blob */}
       {(isRecording || liveTranscript) && (
-        <div className="absolute bottom-32 left-0 right-0 flex justify-center px-6 z-10">
-          <div className="max-w-md w-full">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl px-4 py-3 min-h-[60px]">
-              {liveTranscript ? (
-                <p className="text-white text-center text-sm leading-relaxed">
-                  {liveTranscript}
-                  <span className="inline-block w-1 h-4 bg-white/60 ml-1 animate-pulse" />
-                </p>
-              ) : (
-                <p className="text-white/50 text-center text-sm italic">
-                  Listening...
-                </p>
-              )}
-            </div>
+        <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+          <div className="max-w-lg w-full px-8 -mt-8">
+            {liveTranscript ? (
+              <p className="text-white/90 text-center text-lg md:text-xl leading-relaxed font-light">
+                {liveTranscript}
+              </p>
+            ) : (
+              <p className="text-white/40 text-center text-lg italic">
+                Listening...
+              </p>
+            )}
           </div>
         </div>
       )}
