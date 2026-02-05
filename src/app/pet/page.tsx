@@ -101,7 +101,24 @@ export default function PetPage() {
     setIsInitialized(true);
   }, [router]);
 
-  // Initial greeting and intro text
+  // Show intro text on every visit
+  useEffect(() => {
+    if (!isInitialized || !assistantType) return;
+    
+    // Show intro text every time
+    setShowIntro(true);
+    
+    // Fade out intro after 5 seconds
+    const introTimer = setTimeout(() => {
+      setShowIntro(false);
+    }, 5000);
+
+    return () => {
+      clearTimeout(introTimer);
+    };
+  }, [isInitialized, assistantType]);
+
+  // Initial greeting (only on first visit)
   useEffect(() => {
     if (!isInitialized || !assistantType || hasGreetedRef.current) return;
     
@@ -113,14 +130,6 @@ export default function PetPage() {
 
     hasGreetedRef.current = true;
     
-    // Show intro text
-    setShowIntro(true);
-    
-    // Fade out intro after 6 seconds
-    const introTimer = setTimeout(() => {
-      setShowIntro(false);
-    }, 6000);
-    
     // Delay greeting slightly for better UX
     const greetingTimer = setTimeout(async () => {
       const greeting = await getInitialGreeting();
@@ -130,7 +139,6 @@ export default function PetPage() {
     }, 1000);
 
     return () => {
-      clearTimeout(introTimer);
       clearTimeout(greetingTimer);
     };
   }, [isInitialized, assistantType, getInitialGreeting, speak]);

@@ -25,7 +25,7 @@ export const openai = {
 
 // Model configurations
 export const MODELS = {
-  chat: 'gpt-5-mini',
+  chat: 'gpt-4o-mini',
   transcription: 'whisper-1',
   tts: 'tts-1',
 } as const;
